@@ -6,9 +6,18 @@ const {
   usuariosPut,
   usuariosDelete,
   usuariosPatch,
-} = require('../controllers/usuarios') 
-const { validarCampos } = require('../middlewares/validar-campos')
-const { esRolValido, emailExiste, existeUsuarioPorId } = require('../helpers/db-validators')
+} = require('../controllers/usuarios')
+const {
+  esRolValido,
+  emailExiste,
+  existeUsuarioPorId,
+} = require('../helpers/db-validators')
+const {
+  esAdminRole,
+  validarJWT,
+  validarCampos,
+  tieneRole,
+} = require('../middlewares')
 
 const router = Router()
 
@@ -21,25 +30,36 @@ router.post(
     check('password', 'El password debe de ser más de 6 letras').isLength({
       min: 6,
     }),
-    check('correo').custom(emailExiste), 
+    check('correo').custom(emailExiste),
     check('rol').custom(esRolValido),
     validarCampos,
   ],
   usuariosPost
 )
 
-router.put('/:id',[
-  check('id', 'No es un ID válido').isMongoId(),
-  check('id').custom(existeUsuarioPorId),
-  check('rol').custom(esRolValido),
-  validarCampos,
-], usuariosPut)
+router.put(
+  '/:id',
+  [
+    check('id', 'No es un ID válido').isMongoId(),
+    check('id').custom(existeUsuarioPorId),
+    check('rol').custom(esRolValido),
+    validarCampos,
+  ],
+  usuariosPut
+)
 
-router.delete('/:id',[
-  check('id', 'No es un ID válido').isMongoId(),
-  check('id').custom(existeUsuarioPorId),
-  validarCampos,
-] ,usuariosDelete)
+router.delete(
+  '/:id',
+  [
+    validarJWT,
+    esAdminRole,
+    tieneRole('ADMIN_ROLE', 'VENTAS_ROLE'),
+    check('id', 'No es un ID válido').isMongoId(),
+    check('id').custom(existeUsuarioPorId),
+    validarCampos,
+  ],
+  usuariosDelete
+)
 
 router.patch('/', usuariosPatch)
 
