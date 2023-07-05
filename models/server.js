@@ -1,17 +1,25 @@
 const express = require('express')
 const cors = require('cors')
+const { dbConnection } = require('../db/config')
 
 class Server {
   constructor() {
     this.app = express()
-    this.port = process.env.PORT
+    this.port = process.env.PORT || 8080
     this.usuariosPath = '/api/usuarios'
+    this.authPath = '/api/auth'
+
+    //Conección a la base de datos
+    this.conectarDB()
 
     // Middlewares
-
     this.middlewares()
 
     this.routes()
+  }
+
+  async conectarDB() {
+    await dbConnection()
   }
 
   middlewares() {
@@ -25,11 +33,13 @@ class Server {
   }
 
   routes() {
+    this.app.use(this.authPath, require('../routes/auth.routes'))
     this.app.use(this.usuariosPath, require('../routes/user.routes'))
   }
+
   listen() {
     this.app.listen(this.port, () => {
-      console.log('Servidor corriendo en el puerto 8080')
+      console.log('Servidor corriendo en el puerto 8080 🚀')
     })
   }
 }
